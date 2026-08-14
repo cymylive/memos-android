@@ -13,8 +13,8 @@ android {
         applicationId = "com.usememos.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.31.0"
+        versionCode = 3
+        versionName = "0.32.0"
     }
 
     signingConfigs {
@@ -55,4 +55,5 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation(files("libs/mobile.aar"))
+    implementation("net.lingala.zip4j:zip4j:2.1.1")
 }

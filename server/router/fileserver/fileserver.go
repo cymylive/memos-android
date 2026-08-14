@@ -122,6 +122,11 @@ func (s *FileServerService) RegisterRoutes(echoServer *echo.Echo) {
 	fileGroup := echoServer.Group("/file")
 	fileGroup.GET("/attachments/:uid/:filename", s.serveAttachmentFile)
 	fileGroup.GET("/users/:identifier/avatar", s.serveUserAvatar)
+
+	s.registerUploadRoutes(echoServer)
+
+	// Best-effort startup cleanup of orphaned asset files (no DB record).
+	go s.cleanupOrphanAssets(context.Background())
 }
 
 // =============================================================================

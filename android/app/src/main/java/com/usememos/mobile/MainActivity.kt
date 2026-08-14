@@ -498,7 +498,16 @@ class MainActivity : AppCompatActivity() {
                         if (input == null) {
                             message = "无法读取备份文件"
                         } else {
+                            // Copy the picked backup into a local temp file first:
+                            // zip4j needs random access (ZIP64 central directory).
+                            // The copy is streamed, so memory stays flat even for
+                            // multi-GB packages.
+                            val tempZip = File(cacheDir, "restore_upload.zip")
+                            tempZip.delete()
                             input.use { stream ->
+                                stream.copyTo(tempZip.outputStream())
+                            }
+                            try {
                                 // Extract into a temp dir first so a corrupt backup
                                 // never destroys the live data, then swap.
                                 val parent = filesDir.parentFile!!
@@ -506,7 +515,7 @@ class MainActivity : AppCompatActivity() {
                                 val oldDir = File(parent, "restore_old")
                                 tmpDir.deleteRecursively()
                                 oldDir.deleteRecursively()
-                                ZipUtils.unzipTo(stream, tmpDir)
+                                ZipUtils.unzipTo(tempZip, tmpDir)
                                 // Database file is named memos_<mode>.db; the embedded
                                 // server always runs in prod mode (see memos profile).
                                 val dbFile = File(tmpDir, "memos_prod.db")
@@ -519,6 +528,8 @@ class MainActivity : AppCompatActivity() {
                                     throw IOException("替换数据目录失败")
                                 }
                                 oldDir.deleteRecursively()
+                            } finally {
+                                tempZip.delete()
                             }
                         }
                     } catch (e: Exception) {
