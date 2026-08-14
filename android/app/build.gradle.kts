@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val keystoreFile = System.getenv("ANDROID_KEYSTORE_FILE")
+
 android {
     namespace = "com.usememos.mobile"
     compileSdk = 35
@@ -12,12 +14,26 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "0.30.0-mobile"
+        versionName = "0.30.0"
+    }
+
+    signingConfigs {
+        create("release") {
+            if (!keystoreFile.isNullOrEmpty()) {
+                storeFile = file(keystoreFile)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (!keystoreFile.isNullOrEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
