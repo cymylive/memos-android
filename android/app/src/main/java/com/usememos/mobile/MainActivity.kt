@@ -84,21 +84,33 @@ class MainActivity : AppCompatActivity() {
 
     private val createBackupLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
-            val zipFile = backupZipFile()
-            if (uri != null) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val ok = runCatching {
-                        contentResolver.openOutputStream(uri)?.use { out ->
-                            zipFile.inputStream().use { it.copyTo(out) }
-                        } ?: return@runCatching false
-                        true
-                    }.getOrDefault(false)
-                    withContext(Dispatchers.Main) {
-                        toast(if (ok) "备份已保存" else "备份保存失败")
+            if (uri == null) return@registerForActivityResult
+            lifecycleScope.launch {
+                progressBar.isVisible = true
+                val error: String? = withContext(Dispatchers.IO) {
+                    try {
+                        Mobile.stopServer()
+                        val out = contentResolver.openOutputStream(uri)
+                        if (out == null) {
+                            "无法打开保存位置"
+                        } else {
+                            out.use { stream -> ZipUtils.zipDirectory(filesDir, stream) }
+                            null
+                        }
+                    } catch (e: Exception) {
+                        e.message ?: "未知错误"
+                    } finally {
+                        runCatching { Mobile.startServer(filesDir.absolutePath, serverPort.toLong()) }
                     }
                 }
+                progressBar.isVisible = false
+                webView.reload()
+                if (error == null) {
+                    toast("备份已保存")
+                } else {
+                    showErrorDialog("备份失败", error)
+                }
             }
-            zipFile.delete()
         }
 
     private val openRestoreLauncher =
@@ -459,29 +471,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun backupData() {
-        lifecycleScope.launch {
-            progressBar.isVisible = true
-            val failure = withContext(Dispatchers.IO) {
-                try {
-                    Mobile.stopServer()
-                    val zipFile = backupZipFile()
-                    zipFile.delete()
-                    ZipUtils.zipDirectory(filesDir, zipFile)
-                    null
-                } catch (e: Exception) {
-                    e.message
-                } finally {
-                    // Server must be restarted no matter what happened above.
-                    Mobile.startServer(filesDir.absolutePath, serverPort.toLong())
-                }
-            }
-            progressBar.isVisible = false
-            if (failure == null) {
-                createBackupLauncher.launch(BACKUP_FILENAME)
-            } else {
-                toast("备份失败：$failure")
-            }
-        }
+        createBackupLauncher.launch(BACKUP_FILENAME)
     }
 
     private fun restoreFromUri(uri: Uri) {
@@ -504,6 +494,9 @@ class MainActivity : AppCompatActivity() {
                             tmpDir.deleteRecursively()
                             oldDir.deleteRecursively()
                             ZipUtils.unzipTo(stream, tmpDir)
+                            if (!File(tmpDir, "memos.db").isFile) {
+                                throw IOException("备份文件缺少 memos.db，不是有效的备份")
+                            }
                             filesDir.renameTo(oldDir)
                             if (!tmpDir.renameTo(filesDir)) {
                                 oldDir.renameTo(filesDir)
@@ -515,7 +508,7 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     message = "恢复失败：${e.message}"
                 }
-                Mobile.startServer(filesDir.absolutePath, serverPort.toLong())
+                runCatching { Mobile.startServer(filesDir.absolutePath, serverPort.toLong()) }
                 message
             }
             progressBar.isVisible = false
@@ -523,7 +516,7 @@ class MainActivity : AppCompatActivity() {
                 toast("恢复完成")
                 webView.loadUrl(serverUrl())
             } else {
-                toast(error)
+                showErrorDialog("恢复失败", error)
             }
         }
     }
@@ -535,7 +528,16 @@ class MainActivity : AppCompatActivity() {
         finishAffinity()
     }
 
-    private fun backupZipFile(): File = File(cacheDir, BACKUP_FILENAME)
+    private fun showErrorDialog(title: String, message: String) {
+        runCatching {
+            File(cacheDir, "backup-error.log").appendText("[$title] $message\n")
+        }
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("知道了", null)
+            .show()
+    }
 
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()

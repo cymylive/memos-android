@@ -5,23 +5,29 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 /**
- * Minimal zip helpers for backup (data dir -> zip) and restore (zip -> data dir).
+ * Minimal zip helpers for backup (data dir -> stream) and restore (zip -> data dir).
  * Restore guards against zip-slip traversal.
  */
 object ZipUtils {
 
-    fun zipDirectory(dir: File, out: File) {
-        ZipOutputStream(BufferedOutputStream(out.outputStream())).use { zos ->
+    fun zipDirectory(dir: File, out: OutputStream) {
+        ZipOutputStream(BufferedOutputStream(out)).use { zos ->
             dir.walkTopDown().filter { it.isFile }.forEach { file ->
                 val entryName = file.relativeTo(dir).invariantSeparatorsPath
                 zos.putNextEntry(ZipEntry(entryName))
-                file.inputStream().use { it.copyTo(zos) }
-                zos.closeEntry()
+                try {
+                    file.inputStream().use { it.copyTo(zos) }
+                } catch (e: IOException) {
+                    throw IOException("无法读取文件 $entryName（${e.message}）", e)
+                } finally {
+                    zos.closeEntry()
+                }
             }
         }
     }

@@ -47,7 +47,9 @@ class MemosService : Service() {
         // saved port so the notification and server always agree with the app.
         MainActivity.serverPort = getSharedPreferences(MainActivity.PREF_NAME, MODE_PRIVATE)
             .getInt(MainActivity.PREF_SERVER_PORT, MainActivity.DEFAULT_SERVER_PORT)
-        val error = Mobile.startServer(filesDir.absolutePath, MainActivity.serverPort.toLong())
+        val error = runCatching {
+            Mobile.startServer(filesDir.absolutePath, MainActivity.serverPort.toLong())
+        }.getOrDefault("服务启动异常")
         if (error.isNotEmpty()) {
             updateNotification("服务异常：$error")
         }
