@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Memos</string>
+    <string name="menu_backup">备份数据</string>
+    <string name="menu_restore">恢复数据</string>
+    <string name="menu_stop">停止共享</string>
+</resources>
