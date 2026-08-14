@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: LinearProgressIndicator
     private var pendingFileChooser: ValueCallback<Array<Uri>>? = null
     private val fontDir: File get() = File(filesDir, "fonts")
+    private var isBusy = false
 
     private val importFontLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -84,31 +85,38 @@ class MainActivity : AppCompatActivity() {
 
     private val createBackupLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
-            if (uri == null) return@registerForActivityResult
+            if (uri == null) {
+                isBusy = false
+                return@registerForActivityResult
+            }
             lifecycleScope.launch {
-                progressBar.isVisible = true
-                val error: String? = withContext(Dispatchers.IO) {
-                    try {
-                        Mobile.stopServer()
-                        val out = contentResolver.openOutputStream(uri)
-                        if (out == null) {
-                            "无法打开保存位置"
-                        } else {
-                            out.use { stream -> ZipUtils.zipDirectory(filesDir, stream) }
-                            null
+                try {
+                    progressBar.isVisible = true
+                    val error: String? = withContext(Dispatchers.IO) {
+                        try {
+                            Mobile.stopServer()
+                            val out = contentResolver.openOutputStream(uri)
+                            if (out == null) {
+                                "无法打开保存位置"
+                            } else {
+                                out.use { stream -> ZipUtils.zipDirectory(filesDir, stream) }
+                                null
+                            }
+                        } catch (e: Exception) {
+                            e.message ?: "未知错误"
+                        } finally {
+                            runCatching { Mobile.startServer(filesDir.absolutePath, serverPort.toLong()) }
                         }
-                    } catch (e: Exception) {
-                        e.message ?: "未知错误"
-                    } finally {
-                        runCatching { Mobile.startServer(filesDir.absolutePath, serverPort.toLong()) }
                     }
-                }
-                progressBar.isVisible = false
-                webView.reload()
-                if (error == null) {
-                    toast("备份已保存")
-                } else {
-                    showErrorDialog("备份失败", error)
+                    progressBar.isVisible = false
+                    webView.reload()
+                    if (error == null) {
+                        toast("备份已保存")
+                    } else {
+                        showErrorDialog("备份失败", error)
+                    }
+                } finally {
+                    isBusy = false
                 }
             }
         }
@@ -471,52 +479,63 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun backupData() {
+        if (isBusy) return
+        isBusy = true
         createBackupLauncher.launch(BACKUP_FILENAME)
     }
 
     private fun restoreFromUri(uri: Uri) {
+        if (isBusy) return
+        isBusy = true
         lifecycleScope.launch {
-            progressBar.isVisible = true
-            val error = withContext(Dispatchers.IO) {
-                var message: String? = null
-                try {
-                    Mobile.stopServer()
-                    val input = contentResolver.openInputStream(uri)
-                    if (input == null) {
-                        message = "无法读取备份文件"
-                    } else {
-                        input.use { stream ->
-                            // Extract into a temp dir first so a corrupt backup
-                            // never destroys the live data, then swap.
-                            val parent = filesDir.parentFile!!
-                            val tmpDir = File(parent, "restore_tmp")
-                            val oldDir = File(parent, "restore_old")
-                            tmpDir.deleteRecursively()
-                            oldDir.deleteRecursively()
-                            ZipUtils.unzipTo(stream, tmpDir)
-                            if (!File(tmpDir, "memos.db").isFile) {
-                                throw IOException("备份文件缺少 memos.db，不是有效的备份")
+            try {
+                progressBar.isVisible = true
+                val error = withContext(Dispatchers.IO) {
+                    var message: String? = null
+                    try {
+                        Mobile.stopServer()
+                        val input = contentResolver.openInputStream(uri)
+                        if (input == null) {
+                            message = "无法读取备份文件"
+                        } else {
+                            input.use { stream ->
+                                // Extract into a temp dir first so a corrupt backup
+                                // never destroys the live data, then swap.
+                                val parent = filesDir.parentFile!!
+                                val tmpDir = File(parent, "restore_tmp")
+                                val oldDir = File(parent, "restore_old")
+                                tmpDir.deleteRecursively()
+                                oldDir.deleteRecursively()
+                                ZipUtils.unzipTo(stream, tmpDir)
+                                // Database file is named memos_<mode>.db; the embedded
+                                // server always runs in prod mode (see memos profile).
+                                val dbFile = File(tmpDir, "memos_prod.db")
+                                if (!dbFile.isFile || dbFile.length() <= 0) {
+                                    throw IOException("备份文件缺少数据库文件，不是有效的备份")
+                                }
+                                filesDir.renameTo(oldDir)
+                                if (!tmpDir.renameTo(filesDir)) {
+                                    oldDir.renameTo(filesDir)
+                                    throw IOException("替换数据目录失败")
+                                }
+                                oldDir.deleteRecursively()
                             }
-                            filesDir.renameTo(oldDir)
-                            if (!tmpDir.renameTo(filesDir)) {
-                                oldDir.renameTo(filesDir)
-                                throw IOException("替换数据目录失败")
-                            }
-                            oldDir.deleteRecursively()
                         }
+                    } catch (e: Exception) {
+                        message = "恢复失败：${e.message}"
                     }
-                } catch (e: Exception) {
-                    message = "恢复失败：${e.message}"
+                    runCatching { Mobile.startServer(filesDir.absolutePath, serverPort.toLong()) }
+                    message
                 }
-                runCatching { Mobile.startServer(filesDir.absolutePath, serverPort.toLong()) }
-                message
-            }
-            progressBar.isVisible = false
-            if (error == null) {
-                toast("恢复完成")
-                webView.loadUrl(serverUrl())
-            } else {
-                showErrorDialog("恢复失败", error)
+                progressBar.isVisible = false
+                if (error == null) {
+                    toast("恢复完成")
+                    webView.loadUrl(serverUrl())
+                } else {
+                    showErrorDialog("恢复失败", error)
+                }
+            } finally {
+                isBusy = false
             }
         }
     }
