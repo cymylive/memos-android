@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startServerAndLoad() {
         lifecycleScope.launch(Dispatchers.IO) {
-            val error = Mobile.StartServer(filesDir.absolutePath, SERVER_PORT)
+            val error = Mobile.startServer(filesDir.absolutePath, SERVER_PORT.toLong())
             withContext(Dispatchers.Main) {
                 if (error.isNotEmpty()) {
                     toast("服务启动失败：$error")
@@ -194,7 +194,7 @@ class MainActivity : AppCompatActivity() {
             progressBar.isVisible = true
             val failure = withContext(Dispatchers.IO) {
                 try {
-                    Mobile.StopServer()
+                    Mobile.stopServer()
                     val zipFile = backupZipFile()
                     zipFile.delete()
                     ZipUtils.zipDirectory(filesDir, zipFile)
@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
                     e.message
                 } finally {
                     // Server must be restarted no matter what happened above.
-                    Mobile.StartServer(filesDir.absolutePath, SERVER_PORT)
+                    Mobile.startServer(filesDir.absolutePath, SERVER_PORT.toLong())
                 }
             }
             progressBar.isVisible = false
@@ -221,7 +221,7 @@ class MainActivity : AppCompatActivity() {
             val error = withContext(Dispatchers.IO) {
                 var message: String? = null
                 try {
-                    Mobile.StopServer()
+                    Mobile.stopServer()
                     val input = contentResolver.openInputStream(uri)
                     if (input == null) {
                         message = "无法读取备份文件"
@@ -246,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     message = "恢复失败：${e.message}"
                 }
-                Mobile.StartServer(filesDir.absolutePath, SERVER_PORT)
+                Mobile.startServer(filesDir.absolutePath, SERVER_PORT.toLong())
                 message
             }
             progressBar.isVisible = false
@@ -261,7 +261,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopSharing() {
         stopService(android.content.Intent(this, MemosService::class.java))
-        Mobile.StopServer()
+        Mobile.stopServer()
         toast("已停止共享")
         finishAffinity()
     }

@@ -37,13 +37,13 @@ class MemosService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        Mobile.StopServer()
+        Mobile.stopServer()
         super.onDestroy()
     }
 
     private fun startServerIfNeeded() {
-        if (Mobile.IsRunning()) return
-        val error = Mobile.StartServer(filesDir.absolutePath, MainActivity.SERVER_PORT)
+        if (Mobile.isRunning()) return
+        val error = Mobile.startServer(filesDir.absolutePath, MainActivity.SERVER_PORT.toLong())
         if (error.isNotEmpty()) {
             updateNotification("服务异常：$error")
         }
