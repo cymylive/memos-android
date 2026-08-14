@@ -1,81 +1,64 @@
-> ✨ Featured Sponsor: [CodeRabbit](https://coderabbit.link/usememos) — Cut code review time & bugs in half, instantly.
+# OwnDiary（原 Memos 离线版）
 
-# Memos
+> 一款完全离线的安卓备忘录应用，数据 100% 保存在本机，支持局域网分享访问。
 
-<img align="right" height="96px" src="https://raw.githubusercontent.com/usememos/.github/refs/heads/main/assets/logo-rounded.png" alt="Memos" />
+[![Release](https://img.shields.io/github/v/release/cymylive/memos-android?label=最新版本&style=flat-square&color=blue)](https://github.com/cymylive/memos-android/releases/latest)
+[![License](https://img.shields.io/badge/许可证-MIT-green?style=flat-square)](LICENSE)
+[![下载](https://img.shields.io/badge/⬇-下载%20APK-orange?style=flat-square)](https://github.com/cymylive/memos-android/releases/latest)
 
-Memos is an open-source, self-hosted note-taking app built for quick capture. It is Markdown-native, lightweight, and keeps your data under your control.
+OwnDiary 基于开源项目 [Memos](https://github.com/usememos/memos) 构建，去掉服务器部署环节，直接以安卓应用的形式运行：打开即用，无需注册，无需联网，所有笔记、图片、数据都存在你的手机里。
 
-[![Home](https://img.shields.io/badge/🏠-usememos.com-blue?style=flat-square)](https://usememos.com)
-[![Live Demo](https://img.shields.io/badge/✨-Try%20Demo-orange?style=flat-square)](https://demo.usememos.com/)
-[![Docs](https://img.shields.io/badge/📚-Documentation-green?style=flat-square)](https://usememos.com/docs)
-[![Discord](https://img.shields.io/badge/💬-Discord-5865f2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/tfPJa4UmAv)
-[![Docker Pulls](https://img.shields.io/docker/pulls/neosmemo/memos?style=flat-square&logo=docker)](https://hub.docker.com/r/neosmemo/memos)
+## ✨ 功能
 
-<img src="https://raw.githubusercontent.com/usememos/.github/refs/heads/main/assets/demo.png" alt="Memos Demo Screenshot" height="512" />
+- **完全离线** — 无需任何账号和网络服务，断网也能正常使用
+- **本地数据** — 笔记、附件、数据库全部保存在应用私有目录，可随时一键备份/恢复
+- **局域网共享** — 同一 WiFi 下，手机/电脑浏览器输入地址即可访问你的日记
+- **界面中文** — 默认中文界面，内置霞鹜文楷等清新字体，也可导入你喜欢的字体
+- **自定义端口** — 服务端口可自由修改（默认 8081）
+- **Markdown 原生** — 完整的 Markdown 编辑体验，支持图片、附件、标签、关系引用
 
-## Features
+## 📥 下载安装
 
-- **Capture quickly** — A timeline-first interface keeps note-taking simple: open, write, and move on.
-- **Own your data** — Self-host Memos on your infrastructure with no telemetry.
-- **Deploy anywhere** — Run a single Go binary or Docker container with SQLite, MySQL, or PostgreSQL.
-- **Integrate freely** — Build on the REST and gRPC APIs or adapt the MIT-licensed source to your needs.
+1. 前往 [Releases 页面](https://github.com/cymylive/memos-android/releases/latest) 下载 `app-release.apk`
+2. 安装到安卓手机（需要允许"安装未知来源应用"）
+3. 打开即用，无需任何配置
 
-## Quick Start
+> 升级版本时若提示"签名不一致无法覆盖安装"，请先备份数据，卸载旧版后重新安装。
 
-Want to explore Memos first? Open the [live demo](https://demo.usememos.com/).
+## 📖 使用说明
 
-### Docker (Recommended)
+### 局域网访问
 
-```bash
-docker run -d \
-  --name memos \
-  -p 5230:5230 \
-  -v ~/.memos:/var/opt/memos \
-  neosmemo/memos:stable
-```
+打开应用后，顶部菜单可查看本机 IP，同一 WiFi 下的设备在浏览器输入 `http://<手机IP>:8081` 即可访问。
 
-Open `http://localhost:5230` and start writing.
+### 更换端口
 
-### Native Binary
+右上角菜单 → **设置端口**，修改后服务自动重启（范围 1-65535）。
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/usememos/memos/main/scripts/install.sh | sh
-```
+### 界面字体
 
-### Other Installation Methods
+右上角菜单 → **界面字体**：
 
-- **Docker Compose** — Recommended for production deployments.
-- **Kubernetes** — Helm charts and manifests are available.
-- **Build from source** — Best for development and customization.
+- **系统默认** — 使用系统默认字体
+- **霞鹜文楷** — 清新手写风格（内置两款字重）
+- **自定义字体** — 导入本机 TTF/OTF/WOFF/WOFF2 字体文件（单个不超过 50MB）
 
-See the [deployment guide](https://usememos.com/docs/deploy) for detailed instructions.
+### 备份与恢复
 
-## Web Clipper
+右上角菜单 → **备份数据**：生成 zip 备份文件保存到任意位置。
+右上角菜单 → **恢复数据**：选择备份文件，一键还原全部笔记数据。
 
-Save pages, selected text, and images directly to your Memos instance with the official [Memos Web Clipper](https://github.com/usememos/web-clipper). The extension is available for [Chrome](https://chromewebstore.google.com/detail/memos-web-clipper/nebaoebnljalfegiidibihhkebeiklbl) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/memos-web-clipper/), and lets you review each clip, choose its visibility, and customize its Markdown format before saving.
+### 停止共享
 
-## Contributing
+右上角菜单 → **停止共享**：关闭局域网服务并退出应用。
 
-Contributions of all kinds are welcome, including bug reports, feature suggestions, pull requests, documentation, and translations.
+## 🔗 相关链接
 
-- [Report bugs](https://github.com/usememos/memos/issues/new?template=bug_report.md)
-- [Suggest features](https://github.com/usememos/memos/issues/new?template=feature_request.md)
-- [Submit pull requests](https://github.com/usememos/memos/pulls)
-- [Improve documentation](https://github.com/usememos/dotcom)
-- [Help with translations](https://github.com/usememos/memos/tree/main/web/src/locales)
+- [GitHub Releases](https://github.com/cymylive/memos-android/releases) — 下载与版本历史
+- [Issues](https://github.com/cymylive/memos-android/issues) — 反馈问题与建议
+- [Memos 上游项目](https://github.com/usememos/memos) — 本项目的基础开源项目
 
-## Sponsors
+## 📜 许可
 
-- [**CodeRabbit** — Cut code review time and bugs in half](https://coderabbit.link/usememos)
-- [**SSD Nodes** — Affordable VPS hosting for self-hosters](https://ssdnodes.com/?utm_source=memos&utm_medium=sponsor)
-
-Love Memos? [Sponsor us on GitHub](https://github.com/sponsors/usememos) to help keep the project growing!
-
-## License
-
-Memos is open-source software licensed under the [MIT License](LICENSE). See our [Privacy Policy](https://usememos.com/privacy) for details on data handling.
-
----
-
-**[Website](https://usememos.com)** • **[Documentation](https://usememos.com/docs)** • **[Demo](https://demo.usememos.com/)** • **[Discord](https://discord.gg/tfPJa4UmAv)** • **[X/Twitter](https://x.com/usememos)**
+- 应用代码基于 [MIT License](LICENSE)
+- 内置字体 [霞鹜文楷（LXGW WenKai）](https://github.com/lxgw/LxgwWenKai) v1.522，遵循 SIL Open Font License 1.1，可免费商用
