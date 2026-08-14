@@ -94,10 +94,11 @@ jobs:
           APK=android/app/build/outputs/apk/release/app-release.apk
           test -f "$APK"
           TAG=${GITHUB_REF_NAME}
-          if [ -z "$TAG" ] || [ "$TAG" = "main" ]; then TAG="v0.30.0"; fi
-          NOTES="memos-android 离线发行版（内置 Go 后端 + WebView）.
-          - 安装后自动在本机 8081 端口启动 memos 服务，通知栏显示局域网访问地址
+          if [ -z "$TAG" ] || [ "$TAG" = "main" ]; then TAG="v0.31.0"; fi
+          NOTES="OwnDiary 离线发行版（内置 Go 后端 + WebView）.
+          - 安装后自动在本机 8081 端口启动服务，通知栏显示局域网访问地址
           - 支持局域网共享、备份/恢复（菜单内操作）
+          - 图片预览支持缩放后拖动画布查看细节
           - 数据全部保存在本机应用目录，重启后需手动打开应用"
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" "$APK" --clobber

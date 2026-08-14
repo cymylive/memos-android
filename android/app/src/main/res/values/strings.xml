@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Memos</string>
+    <string name="app_name">OwnDiary</string>
     <string name="menu_backup">备份数据</string>
     <string name="menu_restore">恢复数据</string>
     <string name="menu_stop">停止共享</string>
+    <string name="menu_set_port">设置端口</string>
+    <string name="menu_set_font">界面字体</string>
 </resources>

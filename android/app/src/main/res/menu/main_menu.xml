@@ -9,4 +9,10 @@
     <item
         android:id="@+id/action_stop"
         android:title="@string/menu_stop" />
+    <item
+        android:id="@+id/action_set_port"
+        android:title="@string/menu_set_port" />
+    <item
+        android:id="@+id/action_set_font"
+        android:title="@string/menu_set_font" />
 </menu>

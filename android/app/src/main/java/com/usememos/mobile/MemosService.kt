@@ -43,7 +43,11 @@ class MemosService : Service() {
 
     private fun startServerIfNeeded() {
         if (Mobile.isRunning()) return
-        val error = Mobile.startServer(filesDir.absolutePath, MainActivity.SERVER_PORT.toLong())
+        // Service may be restarted by the system without MainActivity; re-read the
+        // saved port so the notification and server always agree with the app.
+        MainActivity.serverPort = getSharedPreferences(MainActivity.PREF_NAME, MODE_PRIVATE)
+            .getInt(MainActivity.PREF_SERVER_PORT, MainActivity.DEFAULT_SERVER_PORT)
+        val error = Mobile.startServer(filesDir.absolutePath, MainActivity.serverPort.toLong())
         if (error.isNotEmpty()) {
             updateNotification("服务异常：$error")
         }
@@ -52,10 +56,10 @@ class MemosService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Memos 共享服务",
+            "OwnDiary 共享服务",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "保持 memos 服务器运行，供局域网设备访问"
+            description = "保持 OwnDiary 服务器运行，供局域网设备访问"
         }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
@@ -78,8 +82,8 @@ class MemosService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Memos 共享服务运行中")
-            .setContentText("局域网地址：http://${NetworkUtils.lanIpAddress() ?: "未知"}:${MainActivity.SERVER_PORT}")
+            .setContentTitle("OwnDiary 共享服务运行中")
+            .setContentText("局域网地址：http://${NetworkUtils.lanIpAddress() ?: "未知"}:${MainActivity.serverPort}")
             .setContentIntent(openIntent)
             .setOngoing(true)
             .build()
@@ -91,7 +95,7 @@ class MemosService : Service() {
             NOTIFICATION_ID,
             NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("Memos 共享服务")
+                .setContentTitle("OwnDiary 共享服务")
                 .setContentText(message)
                 .setOngoing(true)
                 .build()

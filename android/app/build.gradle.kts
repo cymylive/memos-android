@@ -13,8 +13,8 @@ android {
         applicationId = "com.usememos.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.30.0"
+        versionCode = 2
+        versionName = "0.31.0"
     }
 
     signingConfigs {
@@ -23,7 +23,8 @@ android {
                 storeFile = file(keystoreFile)
                 storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                // PKCS12 store does not support a separate key password; it equals the store password.
+                keyPassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
             }
         }
     }
