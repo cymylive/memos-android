@@ -5,6 +5,11 @@ import enTranslation from "@/locales/en.json";
 
 const LOCALE_STORAGE_KEY = "memos-locale";
 
+// OwnDiary ships with Chinese as the default UI language; users can still
+// override it via the in-app locale picker (persisted to localStorage or
+// their user profile).
+const DEFAULT_LOCALE: Locale = "zh-Hans";
+
 const getStoredLocale = (): Locale | null => {
   try {
     const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -74,7 +79,7 @@ export const isValidLocale = (locale: string | undefined | null): boolean => {
 // Gets the locale to use with proper priority:
 // 1. User setting (if logged in and has preference)
 // 2. localStorage (from previous session)
-// 3. Browser language preference
+// 3. Default UI language (Chinese for OwnDiary)
 export const getLocaleWithFallback = (userLocale?: string): Locale => {
   // Priority 1: User setting (if logged in and valid)
   if (userLocale && isValidLocale(userLocale)) {
@@ -87,8 +92,8 @@ export const getLocaleWithFallback = (userLocale?: string): Locale => {
     return stored;
   }
 
-  // Priority 3: Browser language
-  return findNearestMatchedLanguage(navigator.language);
+  // Priority 3: Default UI language
+  return DEFAULT_LOCALE;
 };
 
 // Applies and persists a locale setting
@@ -106,7 +111,7 @@ export const loadLocale = (locale: string): Locale => {
  */
 export const applyLocaleEarly = (): void => {
   const stored = getStoredLocale();
-  const locale = stored ?? findNearestMatchedLanguage(navigator.language);
+  const locale = stored ?? DEFAULT_LOCALE;
   loadLocale(locale);
 };
 
